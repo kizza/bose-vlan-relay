@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+output="$repo_root/cast.original.txt"
+
+avahi-browse -rt _googlecast._tcp | tee "$output"
+echo "Cast discovery saved to $output"

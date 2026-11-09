@@ -1,0 +1,12 @@
+# Copy the Bose's TXT records here, one key=value per line.
+# Keep empty values (e.g. rs=). id and fn are replaced by the relay.
+rs=
+nf=REPLACE_WITH_ACTUAL_NF
+bs=REPLACE_WITH_ACTUAL_BS
+st=REPLACE_WITH_ACTUAL_ST
+ca=REPLACE_WITH_ACTUAL_CA
+ic=REPLACE_WITH_ACTUAL_ICON_PATH
+md=REPLACE_WITH_ACTUAL_MODEL
+ve=REPLACE_WITH_ACTUAL_VE
+rm=
+cd=REPLACE_WITH_ACTUAL_CD

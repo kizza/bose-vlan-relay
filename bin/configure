@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $EUID -ne 0 ]]; then
+  echo "Run with sudo: sudo ./bin/configure" >&2
+  exit 1
+fi
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+
+for file in .env cast.txt; do
+  if [[ ! -f "$repo_root/$file" ]]; then
+    echo "Missing $file. Set it up in the checkout before running bin/configure." >&2
+    exit 1
+  fi
+done
+
+install -o root -g root -m 0755 "$repo_root/bin/relay" /usr/local/bin/bose-vlan-relay
+install -o root -g root -m 0600 "$repo_root/.env" /etc/bose-vlan-relay.env
+install -o root -g root -m 0644 "$repo_root/cast.txt" /etc/bose-vlan-relay.txt
+install -o root -g root -m 0644 "$repo_root/bose-vlan-relay.service" /etc/systemd/system/bose-vlan-relay.service
+
+systemctl daemon-reload
+systemctl enable bose-vlan-relay.service
+systemctl restart bose-vlan-relay.service
+
+echo "Bose VLAN Relay configured and restarted."
+echo "Status: systemctl status bose-vlan-relay"
+echo "Logs:   journalctl -u bose-vlan-relay -f"

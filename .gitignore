@@ -1,0 +1,6 @@
+.env
+.discovery
+cast.txt
+cast.original.txt
+.DS_Store
+*.log

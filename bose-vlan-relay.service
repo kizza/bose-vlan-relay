@@ -1,0 +1,24 @@
+[Unit]
+Description=Bose VLAN Relay
+Wants=network-online.target avahi-daemon.service
+After=network-online.target avahi-daemon.service
+
+[Service]
+Type=simple
+User=nobody
+Group=nogroup
+
+EnvironmentFile=/etc/bose-vlan-relay.env
+ExecStart=/usr/local/bin/bose-vlan-relay
+
+Restart=on-failure
+RestartPreventExitStatus=2
+RestartSec=5
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

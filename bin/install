@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $EUID -ne 0 ]]; then
+  echo "Run with sudo: sudo ./bin/install" >&2
+  exit 1
+fi
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+owner="$(stat -c '%u:%g' "$repo_root")"
+owner_uid="${owner%%:*}"
+owner_gid="${owner##*:}"
+
+# Files edited in the checkout belong to its owner, not to sudo's root user.
+# Repair files created by earlier versions without taking over anyone else's files.
+for file in .env cast.txt cast.original.txt .discovery; do
+  path="$repo_root/$file"
+  if [[ -L $path ]]; then
+    echo "Refusing symlink in checkout: $path" >&2
+    exit 1
+  fi
+  if [[ -f $path && $(stat -c %u "$path") == 0 && $owner_uid != 0 ]]; then
+    chown "$owner" "$path"
+    chmod 0600 "$path"
+  fi
+done
+
+# Install dependencies
+apt-get update
+apt-get install -y --no-install-recommends socat avahi-daemon avahi-utils
+systemctl enable --now avahi-daemon
+
+# Generate the virtual identity once; never overwrite local configuration.
+if [[ ! -f "$repo_root/.env" ]]; then
+  uuid="$(tr -d - < /proc/sys/kernel/random/uuid)"
+  install -o "$owner_uid" -g "$owner_gid" -m 0600 /dev/null "$repo_root/.env"
+  sed "s/REPLACE_WITH_STABLE_UUID/$uuid/" "$repo_root/.env.example" > "$repo_root/.env"
+  echo "Generated a stable relay ID in .env."
+fi
+
+echo "Dependencies are ready. Discovering Cast devices..."
+if [[ $owner_uid == 0 ]]; then
+  "$repo_root/bin/discover"
+else
+  runuser -u "$(id -nu "$owner_uid")" -- "$repo_root/bin/discover"
+fi
+
+echo
+echo "Next:"
+if [[ ! -f "$repo_root/cast.txt" ]]; then
+  echo "  cp cast.txt.example cast.txt"
+fi
+echo "  Use cast.original.txt to set BOSE_IP in .env and copy the Bose's TXT records into cast.txt."
+echo "  Edit RELAY_IP and allowed client addresses in .env."
+echo "  sudo ./bin/configure"
